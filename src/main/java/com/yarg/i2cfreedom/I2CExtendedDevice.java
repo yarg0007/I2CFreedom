@@ -8,27 +8,37 @@ public interface I2CExtendedDevice extends I2CDevice {
 	 * Get a description of the serial device configuration.
 	 * @return String describing the serial device configuration.
 	 */
-	public String serializeDevice();
+	public default String serializeDevice() {
+		return "I2CDevice";
+	}
 
 	/**
 	 * Set the timeout for reading data from the I2C device.
 	 * @param timeout Timeout in milliseconds.
 	 */
-	public void setReadTimeout(int timeout);
+	public default void setReadTimeout(int timeout) {
+		return;
+	}
 
 	/**
 	 * Set the timeout for writing data to the I2C device.
 	 * @param timeout Timeout in milliseconds.
 	 */
-	public void setWriteTimeout(int timeout);
+	public default void setWriteTimeout(int timeout) {
+		return;
+	}
 
 	/**
 	 * Open the serial device connection.
 	 */
-	public void openConnection();
+	public default void openConnection() {
+		return;
+	}
 
 	/**
 	 * Close the serial device connection.
 	 */
-	public void closeConnection();
+	public default void closeConnection() {
+		return;
+	}
 }

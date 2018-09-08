@@ -6,6 +6,8 @@ public class I2CExtendedDeviceFactory {
 
 		I2CExtendedDevice device = null;
 
+
+
 		return device;
 	}
 }
