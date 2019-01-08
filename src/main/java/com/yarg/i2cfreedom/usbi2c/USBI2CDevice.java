@@ -11,24 +11,80 @@ public class USBI2CDevice implements I2CExtendedDevice {
 	private SerialPort usbi2c;
 	private int readTimeout = 100;
 	private int writeTimeout = 100;
+	private int deviceAddress = 0;
 
 	public USBI2CDevice() {
 		usbi2c= SerialPort.getCommPort("cu.usbserial-A60129CO");
+	}
+
+	public USBI2CDevice(int deviceAddress) {
+		usbi2c= SerialPort.getCommPort("cu.usbserial-A60129CO");
+		this.deviceAddress = deviceAddress;
 	}
 
 	public USBI2CDevice(String commPort) {
 		usbi2c= SerialPort.getCommPort(commPort);
 	}
 
+	public USBI2CDevice(String commPort, int deviceAddress) {
+		usbi2c= SerialPort.getCommPort(commPort);
+		this.deviceAddress = deviceAddress;
+	}
+
 	@Override
 	public int getAddress() {
-		return 0;
+		return deviceAddress;
+	}
+
+	private byte[] assembleWriteCommand(int address, byte dataByte) {
+		byte[] bytes = new byte[1];
+		bytes[0] = dataByte;
+		return assembleWriteCommand(address, bytes);
+	}
+
+	private byte[] assembleWriteCommand(int address, byte[] dataBytes) {
+
+		int byteArraySize = 4 + dataBytes.length;
+		byte[] servoCommand = new byte[byteArraySize];
+
+		servoCommand[0] = 0x55; 							// Read/write single or multiple bytes
+		servoCommand[1] = (byte) (deviceAddress << 1);		// Device's I2C address
+		servoCommand[2] = (byte) address;					// Device's internal register
+		servoCommand[3] = (byte) dataBytes.length;			// Number of bytes being written
+
+		for (int i = 4; i < byteArraySize; i++) {
+			servoCommand[i] = dataBytes[i-4];				// Bytes being written
+		}
+
+		return servoCommand;
+	}
+
+	private int assembleReadCommand(int address, byte dataByte) {
+		byte[] bytes = new byte[1];
+		bytes[0] = dataByte;
+		return assembleReadCommand(address, bytes);
+	}
+
+	private int assembleReadCommand(int address, byte[] dataBytes) {
+
+		int byteArraySize = 4 + dataBytes.length;
+		byte[] servoCommand = new byte[byteArraySize];
+
+		servoCommand[0] = 0x55;								// Read/write single or multiple bytes
+		servoCommand[1] = (byte) (deviceAddress << 1 | 1);	// Device's I2C address
+		servoCommand[2] = (byte) address;					// Device's internal register
+		servoCommand[3] = (byte) dataBytes.length			// Number of bytes being read
+
+				for (int i = 4; i < byteArraySize; i++) {
+					servoCommand[i] = dataBytes[i-4];
+				}
+
+		return servoCommand;
 	}
 
 	@Override
 	public void write(byte b) throws IOException {
-		byte[] bytes = {b};
-		sendBytes(bytes, 1);
+		throw new IOException("Trying to send byte of data to unknown address.");
 	}
 
 	@Override
@@ -44,8 +100,7 @@ public class USBI2CDevice implements I2CExtendedDevice {
 
 	@Override
 	public void write(int address, byte b) throws IOException {
-		// TODO Auto-generated method stub
-
+		assembleWriteCommand(address, b);
 	}
 
 	@Override
@@ -62,7 +117,16 @@ public class USBI2CDevice implements I2CExtendedDevice {
 
 	@Override
 	public int read() throws IOException {
-		// TODO Auto-generated method stub
+
+		// Try read
+		byte[] servoCommand = new byte[4];
+		servoCommand[0] = 0x55;
+		servoCommand[1] = (byte)0b10000001;
+		servoCommand[2] = 0x00;
+		servoCommand[3] = 0x01;
+
+		readBytes = device.sendBytes(servoCommand, 1);
+		System.out.println("read bytes A: address: " + Integer.toBinaryString(servoCommand[1] & 0xFF).replace(' ', '0') + " read: " + (int)readBytes[0]);
 		return 0;
 	}
 
